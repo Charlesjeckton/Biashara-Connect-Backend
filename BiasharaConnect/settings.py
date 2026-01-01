@@ -4,7 +4,6 @@ import os
 # --------------------------------------------------
 # BASE DIRECTORY
 # --------------------------------------------------
-# BASE_DIR is .../BiasharaConnectBackend
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Path to your Frontend directory (for local dev/testing)
@@ -15,13 +14,13 @@ FRONTEND_DIR = BASE_DIR.parent / 'BiasharaConnectFrontend' / 'public'
 # --------------------------------------------------
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
-    'django-insecure-#q9yb$hv5hj#$0da5-g@eu%)g@hv!7t+^)@ie_6@$wst3&i2t3'  # fallback for dev
+    'django-insecure-#q9yb$hv5hj#$0da5-g@eu%)g@hv!7t+^)@ie_6@$wst3&i2t3'
 )
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-# Allowed hosts: backend URL on Render + localhost for dev
+# Allowed hosts: include Render backend for production + localhost for dev
 ALLOWED_HOSTS = [
-    'biashara-connect-backend.onrender.com',
+    'biashara-connect-backend.onrender.com',  # Render backend
     '127.0.0.1',
     'localhost',
 ]
@@ -30,7 +29,6 @@ ALLOWED_HOSTS = [
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
-    # Django default apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,11 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local app
-    'BiasharaConnectApp.apps.BiasharaConnectAppConfig',  # IDE-safe reference
+    'BiasharaConnectApp.apps.BiasharaConnectAppConfig',
 
     # Third-party apps
-    'corsheaders',  # Cross-Origin Resource Sharing
-    'rest_framework',  # For building APIs
+    'corsheaders',
+    'rest_framework',
 ]
 
 # --------------------------------------------------
@@ -72,7 +70,7 @@ WSGI_APPLICATION = 'BiasharaConnect.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(FRONTEND_DIR)],  # absolute path for IDE/Django safety
+        'DIRS': [str(FRONTEND_DIR)],  # absolute path for dev
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -107,21 +105,17 @@ USE_TZ = True
 # STATIC FILES
 # --------------------------------------------------
 STATIC_URL = '/static/'
-
-# Development: look for frontend assets locally
 STATICFILES_DIRS = [
-    FRONTEND_DIR / 'assets',
+    FRONTEND_DIR / 'assets',  # local dev
 ]
-
-# Production: collectstatic output (Render)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # production
 
 # --------------------------------------------------
 # CORS CONFIGURATION
 # --------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
-    "https://biashara-connect-frontend.vercel.app",  # Production frontend
-    "http://127.0.0.1:5500",                        # Local dev
+    "https://biashara-connect-frontend.vercel.app",  # frontend on Vercel
+    "http://127.0.0.1:5500",                        # local dev
     "http://localhost:5500",
 ]
 
