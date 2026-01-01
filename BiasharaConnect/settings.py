@@ -1,34 +1,56 @@
 from pathlib import Path
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# --------------------------------------------------
+# BASE DIRECTORY
+# --------------------------------------------------
+# BASE_DIR is .../BiasharaConnectBackend
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Path to your Frontend directory (for local dev/testing)
+FRONTEND_DIR = BASE_DIR.parent / 'BiasharaConnectFrontend' / 'public'
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# --------------------------------------------------
+# SECURITY
+# --------------------------------------------------
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-#q9yb$hv5hj#$0da5-g@eu%)g@hv!7t+^)@ie_6@$wst3&i2t3'  # fallback for dev
+)
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#q9yb$hv5hj#$0da5-g@eu%)g@hv!7t+^)@ie_6@$wst3&i2t3'
+# Allowed hosts: backend URL on Render + localhost for dev
+ALLOWED_HOSTS = [
+    'biashara-connect-backend.onrender.com',
+    '127.0.0.1',
+    'localhost',
+]
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
-# Application definition
-
+# --------------------------------------------------
+# APPLICATIONS
+# --------------------------------------------------
 INSTALLED_APPS = [
+    # Django default apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'BiasharaConnectApp.apps.BiasharaconnectappConfig',
+
+    # Local app
+    'BiasharaConnectApp.apps.BiasharaConnectAppConfig',  # IDE-safe reference
+
+    # Third-party apps
+    'corsheaders',  # Cross-Origin Resource Sharing
+    'rest_framework',  # For building APIs
 ]
 
+# --------------------------------------------------
+# MIDDLEWARE
+# --------------------------------------------------
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # MUST be first
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -38,16 +60,23 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# --------------------------------------------------
+# URLS & WSGI
+# --------------------------------------------------
 ROOT_URLCONF = 'BiasharaConnect.urls'
+WSGI_APPLICATION = 'BiasharaConnect.wsgi.application'
 
+# --------------------------------------------------
+# TEMPLATES
+# --------------------------------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [str(FRONTEND_DIR)],  # absolute path for IDE/Django safety
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -56,12 +85,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'BiasharaConnect.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# --------------------------------------------------
+# DATABASE
+# --------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -69,39 +95,39 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
+# --------------------------------------------------
+# INTERNATIONALIZATION
+# --------------------------------------------------
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
+# --------------------------------------------------
+# STATIC FILES
+# --------------------------------------------------
+STATIC_URL = '/static/'
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# Development: look for frontend assets locally
+STATICFILES_DIRS = [
+    FRONTEND_DIR / 'assets',
+]
 
-STATIC_URL = 'static/'
+# Production: collectstatic output (Render)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# --------------------------------------------------
+# CORS CONFIGURATION
+# --------------------------------------------------
+CORS_ALLOWED_ORIGINS = [
+    "https://biashara-connect-frontend.vercel.app",  # Production frontend
+    "http://127.0.0.1:5500",                        # Local dev
+    "http://localhost:5500",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# --------------------------------------------------
+# DEFAULT AUTO FIELD
+# --------------------------------------------------
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
