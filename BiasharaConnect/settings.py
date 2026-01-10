@@ -125,3 +125,9 @@ CORS_ALLOW_CREDENTIALS = True
 # DEFAULT AUTO FIELD
 # --------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+AUTH_USER_MODEL = 'BiasharaConnectApp.User'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
