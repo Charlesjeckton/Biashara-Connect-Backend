@@ -5,17 +5,14 @@ import dj_database_url
 from dotenv import load_dotenv
 
 # =====================================================
-# LOAD ENVIRONMENT VARIABLES (LOCAL ONLY)
+# LOAD ENVIRONMENT VARIABLES
 # =====================================================
-load_dotenv()  # Works locally; Render uses Dashboard env vars
+load_dotenv()
 
 # =====================================================
 # BASE DIRECTORY
 # =====================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Path to your Frontend directory (for local dev/testing)
-FRONTEND_DIR = BASE_DIR.parent / "BiasharaConnectFrontend" / "public"
 
 # =====================================================
 # SECURITY
@@ -159,24 +156,46 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # =====================================================
-# CORS / CSRF
+# CORS / CSRF CONFIGURATION (FIXED)
 # =====================================================
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all for debugging
+
+# Keep these for production when you know your frontend URL
 CORS_ALLOWED_ORIGINS = [
     "https://biashara-connect-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
-if DEBUG:
-    CORS_ALLOWED_ORIGINS += [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ]
+# Additional CORS settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://biashara-connect-backend.onrender.com",
     "https://biashara-connect-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
@@ -192,6 +211,7 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.FormParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
 }
 
 if DEBUG:
