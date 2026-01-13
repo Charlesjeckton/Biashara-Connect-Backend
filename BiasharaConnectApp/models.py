@@ -8,7 +8,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('buyer', 'Buyer'),
-        ('seller', 'Seller'),
+        ('seller', 'Seller')
     )
 
     email = models.EmailField(unique=True)
