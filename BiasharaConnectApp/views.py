@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
+from django.db import IntegrityError, transaction
+
 from .serializers import (
     BuyerRegisterSerializer,
     SellerRegisterSerializer
@@ -31,11 +33,27 @@ def register_buyer(request):
     serializer = BuyerRegisterSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {"message": "Buyer account created successfully"},
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            with transaction.atomic():
+                user = serializer.save()
+
+            return Response(
+                {
+                    "message": "Buyer account created successfully",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "role": user.role,
+                    }
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except IntegrityError:
+            return Response(
+                {"error": "Registration failed. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -46,10 +64,27 @@ def register_seller(request):
     serializer = SellerRegisterSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {"message": "Seller account created successfully. Awaiting verification."},
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            with transaction.atomic():
+                user = serializer.save()
+
+            return Response(
+                {
+                    "message": "Seller account created successfully. Awaiting verification.",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "role": user.role,
+                        "verified": False
+                    }
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except IntegrityError:
+            return Response(
+                {"error": "Registration failed. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

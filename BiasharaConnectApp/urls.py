@@ -5,6 +5,8 @@ from .views import (
     register_seller,
 )
 
+app_name = "auth"
+
 urlpatterns = [
     path("", api_home, name="api_home"),
 
