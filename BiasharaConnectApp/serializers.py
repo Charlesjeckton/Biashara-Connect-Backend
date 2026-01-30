@@ -10,8 +10,6 @@ class BuyerRegisterSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20)
 
     password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
-
     location = serializers.CharField(max_length=100)
 
     def validate_email(self, email):
@@ -20,26 +18,22 @@ class BuyerRegisterSerializer(serializers.Serializer):
         return email
 
     def validate(self, data):
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({"password": "Passwords do not match"})
-        validate_password(data['password'])
+        validate_password(data["password"])
         return data
 
     def create(self, validated_data):
-        validated_data.pop('confirm_password')
-
         user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            phone=validated_data['phone'],
-            role='buyer'
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+            phone=validated_data["phone"],
+            role="buyer",
         )
 
         BuyerProfile.objects.create(
             user=user,
-            location=validated_data['location']
+            location=validated_data["location"],
         )
 
         return user
@@ -52,11 +46,14 @@ class SellerRegisterSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20)
 
     password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
 
     business_name = serializers.CharField(max_length=255)
-    business_type = serializers.ChoiceField(choices=SellerProfile.BUSINESS_TYPE_CHOICES)
-    business_category = serializers.ChoiceField(choices=SellerProfile.CATEGORY_CHOICES)
+    business_type = serializers.ChoiceField(
+        choices=SellerProfile.BUSINESS_TYPE_CHOICES
+    )
+    business_category = serializers.ChoiceField(
+        choices=SellerProfile.CATEGORY_CHOICES
+    )
     location = serializers.CharField(max_length=100)
 
     profile_image = serializers.ImageField(required=False)
@@ -67,31 +64,28 @@ class SellerRegisterSerializer(serializers.Serializer):
         return email
 
     def validate(self, data):
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({"password": "Passwords do not match"})
-        validate_password(data['password'])
+        validate_password(data["password"])
         return data
 
     def create(self, validated_data):
-        validated_data.pop('confirm_password')
-        profile_image = validated_data.pop('profile_image', None)
+        profile_image = validated_data.pop("profile_image", None)
 
         user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            phone=validated_data['phone'],
-            role='seller'
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+            phone=validated_data["phone"],
+            role="seller",
         )
 
         SellerProfile.objects.create(
             user=user,
-            business_name=validated_data['business_name'],
-            business_type=validated_data['business_type'],
-            business_category=validated_data['business_category'],
-            location=validated_data['location'],
-            profile_image=profile_image
+            business_name=validated_data["business_name"],
+            business_type=validated_data["business_type"],
+            business_category=validated_data["business_category"],
+            location=validated_data["location"],
+            profile_image=profile_image,
         )
 
         return user
