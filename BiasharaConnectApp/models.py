@@ -11,21 +11,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('seller', 'Seller')
     )
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, db_index=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
 
     role = models.CharField(
         max_length=10,
-        choices=ROLE_CHOICES
+        choices=ROLE_CHOICES,
+        editable=False,
+        db_index=True
     )
 
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
-    # Required by Django
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -86,4 +87,4 @@ class SellerProfile(models.Model):
     is_verified = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Seller: {self.business_name}"
+        return f"Seller: {self.business_name} ({self.user.email})"
