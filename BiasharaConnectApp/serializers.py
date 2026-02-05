@@ -11,6 +11,8 @@ class BuyerRegisterSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20)
 
     password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
     location = serializers.CharField(max_length=100)
 
     def validate_email(self, email):
@@ -19,10 +21,17 @@ class BuyerRegisterSerializer(serializers.Serializer):
         return email
 
     def validate(self, data):
+        if data["password"] != data["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "Passwords do not match."}
+            )
+
         validate_password(data["password"])
         return data
 
     def create(self, validated_data):
+        validated_data.pop("confirm_password")
+
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
@@ -38,6 +47,7 @@ class BuyerRegisterSerializer(serializers.Serializer):
         )
 
         return user
+
 
 
 class SellerRegisterSerializer(serializers.Serializer):
