@@ -74,17 +74,31 @@ class SellerProfile(models.Model):
     )
 
     business_name = models.CharField(max_length=255)
-    business_type = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES)
-    business_category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
-    location = models.CharField(max_length=100)
+    business_type = models.CharField(
+        max_length=20,
+        choices=BUSINESS_TYPE_CHOICES
+    )
+    business_category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES
+    )
+
+    business_location = models.CharField(max_length=100)
+
+    bio = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Short description about the seller or business"
+    )
 
     profile_image = models.ImageField(
         upload_to='seller_profiles/',
-        null=True,
-        blank=True
+        blank=True,
+        null=True
     )
 
     is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Seller: {self.business_name} ({self.user.email})"
+        return f"{self.business_name} ({self.user.email})"
