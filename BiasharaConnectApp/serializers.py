@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import User, BuyerProfile, SellerProfile
+from .models import User, BuyerProfile, SellerProfile, ListingImage, Listing, SavedListing
 from django.db import transaction
 
 
@@ -47,7 +47,6 @@ class BuyerRegisterSerializer(serializers.Serializer):
         )
 
         return user
-
 
 
 class SellerRegisterSerializer(serializers.Serializer):
@@ -125,3 +124,63 @@ class SellerRegisterSerializer(serializers.Serializer):
         )
 
         return user
+
+
+class ListingImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListingImage
+        fields = ('id', 'image', 'is_primary')
+
+
+class ListingSerializer(serializers.ModelSerializer):
+    images = ListingImageSerializer(many=True, required=False, read_only=True)
+
+    class Meta:
+        model = Listing
+        fields = (
+            'id', 'seller', 'title', 'description', 'price',
+            'category', 'condition', 'location', 'area', 'status',
+            'created_at', 'updated_at', 'images'
+        )
+        read_only_fields = ('seller', 'status', 'created_at', 'updated_at')
+
+
+class SavedListingSerializer(serializers.ModelSerializer):
+    listing = ListingSerializer(read_only=True)
+
+    class Meta:
+        model = SavedListing
+        fields = ('id', 'buyer', 'listing', 'saved_at')
+        read_only_fields = ('buyer', 'saved_at')
+
+
+class ListingCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a listing with multiple images.
+    """
+    images = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = Listing
+        fields = (
+            'title', 'description', 'price', 'category', 'condition',
+            'location', 'area', 'images'
+        )
+
+    def create(self, validated_data):
+        # Pop images from the payload
+        images_data = validated_data.pop('images', [])
+        seller = self.context['request'].user.seller_profile
+
+        # Create the listing
+        listing = Listing.objects.create(seller=seller, **validated_data)
+
+        # Add images
+        for image in images_data:
+            ListingImage.objects.create(listing=listing, image=image)
+
+        return listing
