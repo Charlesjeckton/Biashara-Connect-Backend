@@ -102,3 +102,121 @@ class SellerProfile(models.Model):
 
     def __str__(self):
         return f"{self.business_name} ({self.user.email})"
+
+
+class Listing(models.Model):
+
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('deleted', 'Deleted'),
+    )
+
+    CONDITION_CHOICES = (
+        ('new', 'New'),
+        ('used', 'Used'),
+        ('service', 'Service'),
+    )
+
+    CATEGORY_CHOICES = (
+        ('electronics', 'Electronics'),
+        ('fashion', 'Fashion'),
+        ('home', 'Home & Living'),
+        ('vehicles', 'Vehicles'),
+        ('services', 'Services'),
+        ('agriculture', 'Agriculture'),
+    )
+
+    seller = models.ForeignKey(
+        SellerProfile,
+        on_delete=models.CASCADE,
+        related_name='listings'
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES
+    )
+
+    condition = models.CharField(
+        max_length=20,
+        choices=CONDITION_CHOICES
+    )
+
+    location = models.CharField(max_length=100)
+    area = models.CharField(max_length=100)
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='active',
+        db_index=True
+    )
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'category']),
+        ]
+
+    def activate(self):
+        self.status = 'active'
+        self.save(update_fields=['status'])
+
+    def deactivate(self):
+        self.status = 'inactive'
+        self.save(update_fields=['status'])
+
+    def soft_delete(self):
+        self.status = 'deleted'
+        self.save(update_fields=['status'])
+
+    def __str__(self):
+        return self.title
+
+
+class ListingImage(models.Model):
+    listing = models.ForeignKey(
+        Listing,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to='listings/')
+    is_primary = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Image for {self.listing.title}"
+
+
+class SavedListing(models.Model):
+    buyer = models.ForeignKey(
+        BuyerProfile,
+        on_delete=models.CASCADE,
+        related_name='saved_listings'
+    )
+    listing = models.ForeignKey(
+        Listing,
+        on_delete=models.CASCADE,
+        related_name='saved_by'
+    )
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('buyer', 'listing')
+
+    def __str__(self):
+        return f"{self.buyer.user.email} saved {self.listing.title}"
+
