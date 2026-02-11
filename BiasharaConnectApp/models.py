@@ -86,6 +86,7 @@ class Listing(models.Model):
         ('new', 'New'),
         ('used', 'Used'),
         ('service', 'Service'),
+        ('fresh', 'Fresh'),
     )
 
     CATEGORY_CHOICES = (
