@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from .managers import UserManager
+from cloudinary.models import CloudinaryField
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -91,7 +92,7 @@ class SellerProfile(models.Model):
         help_text="Short description about the seller or business"
     )
 
-    profile_image = models.URLField(blank=True, null=True)
+    profile_image = CloudinaryField('profile_image', blank=True, null=True)
 
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -189,7 +190,7 @@ class ListingImage(models.Model):
         on_delete=models.CASCADE,
         related_name='images'
     )
-    image = models.URLField()
+    image = CloudinaryField('listings', blank=True, null=True)
     is_primary = models.BooleanField(default=False)
 
     def __str__(self):
