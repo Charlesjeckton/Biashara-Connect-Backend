@@ -135,14 +135,20 @@ class ListingImageSerializer(serializers.ModelSerializer):
 class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, required=False, read_only=True)
 
+    # Add seller full name
+    seller_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Listing
         fields = (
             'id', 'seller', 'title', 'description', 'price',
             'category', 'condition', 'location', 'area', 'status',
-            'created_at', 'updated_at', 'images'
+            'created_at', 'updated_at', 'images', 'seller_name'
         )
         read_only_fields = ('seller', 'status', 'created_at', 'updated_at')
+
+    def get_seller_name(self, obj):
+        return f"{obj.seller.user.first_name} {obj.seller.user.last_name}"
 
 
 class SavedListingSerializer(serializers.ModelSerializer):
