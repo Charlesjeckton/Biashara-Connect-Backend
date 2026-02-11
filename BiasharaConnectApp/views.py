@@ -78,7 +78,7 @@ def login_user(request):
 # ----------------- Listing Endpoints -----------------
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def list_active_listings(request):
     """
     Buyers can view all active listings.
