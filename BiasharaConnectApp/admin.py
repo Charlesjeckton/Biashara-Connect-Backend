@@ -69,7 +69,7 @@ class BuyerProfileAdmin(admin.ModelAdmin):
 class SellerProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
-        "profile_image_url",
+        "profile_image",
         "business_name",
         "business_type",
         "business_category",
