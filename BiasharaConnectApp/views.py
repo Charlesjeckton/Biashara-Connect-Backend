@@ -10,13 +10,13 @@ from .serializers import (
     SellerRegisterSerializer,
     ListingSerializer,
     ListingCreateSerializer,
-    SavedListingSerializer
 )
 from .models import Listing, SavedListing
 
 
-# ----------------- Auth & Registration -----------------
-
+# =========================
+# API Home
+# =========================
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def api_home(request):
@@ -28,6 +28,9 @@ def api_home(request):
     })
 
 
+# =========================
+# Buyer Registration
+# =========================
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_buyer(request):
@@ -38,27 +41,36 @@ def register_buyer(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# =========================
+# Seller Registration
+# =========================
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_seller(request):
     serializer = SellerRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response({"message": "Seller account created successfully. Awaiting verification."},
-                        status=status.HTTP_201_CREATED)
+        return Response(
+            {"message": "Seller account created successfully. Awaiting verification."},
+            status=status.HTTP_201_CREATED
+        )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# =========================
+# User Login
+# =========================
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_user(request):
     email = request.data.get("email")
     password = request.data.get("password")
+
     if not email or not password:
         return Response({"error": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
     user = authenticate(username=email, password=password)
-    if user is None:
+    if not user:
         return Response({"error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
 
     refresh = RefreshToken.for_user(user)
@@ -75,13 +87,14 @@ def login_user(request):
     }, status=status.HTTP_200_OK)
 
 
-# ----------------- Listing Endpoints -----------------
-
+# =========================
+# Listings
+# =========================
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def list_active_listings(request):
     """
-    Buyers can view all active listings.
+    Get all active listings (buyers can view).
     """
     listings = Listing.objects.filter(status="active")
     serializer = ListingSerializer(listings, many=True)
@@ -92,7 +105,7 @@ def list_active_listings(request):
 @permission_classes([IsAuthenticated])
 def create_listing(request):
     """
-    Sellers can create a listing with multiple images.
+    Sellers can create a listing with multiple Cloudinary image URLs.
     """
     if request.user.role != "seller":
         return Response({"error": "Only sellers can create listings"}, status=status.HTTP_403_FORBIDDEN)
@@ -104,6 +117,9 @@ def create_listing(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# =========================
+# Save / Unsave Listing
+# =========================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def toggle_save_listing(request, listing_id):

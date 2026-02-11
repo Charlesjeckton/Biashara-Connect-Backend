@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from .managers import UserManager
-from cloudinary.models import CloudinaryField
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -17,17 +16,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
 
-    role = models.CharField(
-        max_length=10,
-        choices=ROLE_CHOICES,
-        editable=False,
-        db_index=True
-    )
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, editable=False, db_index=True)
 
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
-
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -40,11 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class BuyerProfile(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='buyer_profile'
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='buyer_profile')
     location = models.CharField(max_length=100)
 
     def __str__(self):
@@ -68,31 +57,15 @@ class SellerProfile(models.Model):
         ('other', 'Other'),
     )
 
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='seller_profile'
-    )
-
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
     business_name = models.CharField(max_length=255)
-    business_type = models.CharField(
-        max_length=20,
-        choices=BUSINESS_TYPE_CHOICES
-    )
-    business_category = models.CharField(
-        max_length=30,
-        choices=CATEGORY_CHOICES
-    )
-
+    business_type = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES)
+    business_category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
     business_location = models.CharField(max_length=100)
+    bio = models.TextField(blank=True, null=True, help_text="Short description about the seller or business")
 
-    bio = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Short description about the seller or business"
-    )
-
-    profile_image = CloudinaryField('image', folder='BiasharaConnect/profile_image', null=True, blank=True)
+    # Store Cloudinary URL for profile image
+    profile_image = models.URLField(blank=True, null=True, help_text="Cloudinary URL stored in BiasharaConnect/profile_image folder")
 
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -102,7 +75,6 @@ class SellerProfile(models.Model):
 
 
 class Listing(models.Model):
-
     STATUS_CHOICES = (
         ('active', 'Active'),
         ('inactive', 'Inactive'),
@@ -124,42 +96,15 @@ class Listing(models.Model):
         ('agriculture', 'Agriculture'),
     )
 
-    seller = models.ForeignKey(
-        SellerProfile,
-        on_delete=models.CASCADE,
-        related_name='listings'
-    )
-
+    seller = models.ForeignKey(SellerProfile, on_delete=models.CASCADE, related_name='listings')
     title = models.CharField(max_length=255)
     description = models.TextField()
-
-    price = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True
-    )
-
-    category = models.CharField(
-        max_length=30,
-        choices=CATEGORY_CHOICES
-    )
-
-    condition = models.CharField(
-        max_length=20,
-        choices=CONDITION_CHOICES
-    )
-
+    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES)
     location = models.CharField(max_length=100)
     area = models.CharField(max_length=100)
-
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default='active',
-        db_index=True
-    )
-
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active', db_index=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -186,12 +131,10 @@ class Listing(models.Model):
 
 
 class ListingImage(models.Model):
-    listing = models.ForeignKey(
-        Listing,
-        on_delete=models.CASCADE,
-        related_name='images'
-    )
-    image = CloudinaryField('image', folder='BiasharaConnect/listing', null=True, blank=True)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='images')
+
+    # Store Cloudinary URL instead of CloudinaryField
+    image = models.URLField(blank=True, null=True, help_text="Cloudinary URL stored in BiasharaConnect/listing folder")
     is_primary = models.BooleanField(default=False)
 
     def __str__(self):
@@ -199,16 +142,8 @@ class ListingImage(models.Model):
 
 
 class SavedListing(models.Model):
-    buyer = models.ForeignKey(
-        BuyerProfile,
-        on_delete=models.CASCADE,
-        related_name='saved_listings'
-    )
-    listing = models.ForeignKey(
-        Listing,
-        on_delete=models.CASCADE,
-        related_name='saved_by'
-    )
+    buyer = models.ForeignKey(BuyerProfile, on_delete=models.CASCADE, related_name='saved_listings')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='saved_by')
     saved_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

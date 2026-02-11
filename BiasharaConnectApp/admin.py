@@ -3,6 +3,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, BuyerProfile, SellerProfile, Listing, ListingImage, SavedListing
 
 
+# =========================
+# User Admin
+# =========================
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     model = User
@@ -10,7 +13,6 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     list_display = ("email", "role", "is_staff", "is_verified", "is_active")
     list_filter = ("role", "is_staff", "is_verified", "is_active")
-
     search_fields = ("email",)
     readonly_fields = ("date_joined", "last_login")
 
@@ -54,56 +56,89 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
 
 
+# =========================
+# Buyer Profile Admin
+# =========================
 @admin.register(BuyerProfile)
 class BuyerProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "location")
     search_fields = ("user__email", "location")
 
 
+# =========================
+# Seller Profile Admin
+# =========================
 @admin.register(SellerProfile)
 class SellerProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "profile_image", "business_name", "business_type", "business_category",
-                    "business_location", "is_verified")
+    list_display = (
+        "user",
+        "profile_image_preview",
+        "business_name",
+        "business_type",
+        "business_category",
+        "business_location",
+        "is_verified",
+    )
     list_filter = ("business_type", "is_verified")
     search_fields = ("user__email", "business_name")
 
+    def profile_image_preview(self, obj):
+        if obj.profile_image:
+            return f'<img src="{obj.profile_image.url}" style="height:50px;width:50px;border-radius:50%;">'
+        return "-"
+    profile_image_preview.allow_tags = True
+    profile_image_preview.short_description = "Profile Image"
 
-# Inline for Listing Images (so images can be managed within a listing)
+
+# =========================
+# Inline Listing Images
+# =========================
 class ListingImageInline(admin.TabularInline):
     model = ListingImage
-    extra = 1  # Number of extra blank image fields
-    fields = ('image', 'is_primary')
-    readonly_fields = ()  # you can make image URL readonly if needed
+    extra = 1
+    fields = ("image_preview", "image", "is_primary")
+    readonly_fields = ("image_preview",)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return f'<img src="{obj.image.url}" style="height:50px;width:50px;">'
+        return "-"
+    image_preview.allow_tags = True
+    image_preview.short_description = "Preview"
 
 
-# Main Listing admin
+# =========================
+# Listing Admin
+# =========================
 @admin.register(Listing)
 class ListingAdmin(admin.ModelAdmin):
-    list_display = ('title', 'seller', 'category', 'condition', 'price', 'status', 'created_at')
-    list_filter = ('status', 'category', 'condition', 'created_at', 'seller')
-    search_fields = ('title', 'description', 'location', 'area')
+    list_display = ("title", "seller", "category", "condition", "price", "status", "created_at")
+    list_filter = ("status", "category", "condition", "created_at", "seller")
+    search_fields = ("title", "description", "location", "area")
     inlines = [ListingImageInline]
-    actions = ['activate_listings', 'deactivate_listings', 'soft_delete_listings']
+    actions = ["activate_listings", "deactivate_listings", "soft_delete_listings"]
 
     # Admin actions
     def activate_listings(self, request, queryset):
-        queryset.update(status='active')
-        self.message_user(request, f"{queryset.count()} listing(s) activated.")
+        updated = queryset.update(status="active")
+        self.message_user(request, f"{updated} listing(s) activated.")
     activate_listings.short_description = "Activate selected listings"
 
     def deactivate_listings(self, request, queryset):
-        queryset.update(status='inactive')
-        self.message_user(request, f"{queryset.count()} listing(s) deactivated.")
+        updated = queryset.update(status="inactive")
+        self.message_user(request, f"{updated} listing(s) deactivated.")
     deactivate_listings.short_description = "Deactivate selected listings"
 
     def soft_delete_listings(self, request, queryset):
-        queryset.update(status='deleted')
-        self.message_user(request, f"{queryset.count()} listing(s) soft-deleted.")
+        updated = queryset.update(status="deleted")
+        self.message_user(request, f"{updated} listing(s) soft-deleted.")
     soft_delete_listings.short_description = "Soft delete selected listings"
 
 
-# Optional: Register SavedListing so admin can see who saved what
+# =========================
+# Saved Listing Admin
+# =========================
 @admin.register(SavedListing)
 class SavedListingAdmin(admin.ModelAdmin):
-    list_display = ('buyer', 'listing', 'saved_at')
-    search_fields = ('buyer__user__email', 'listing__title')
+    list_display = ("buyer", "listing", "saved_at")
+    search_fields = ("buyer__user__email", "listing__title")

@@ -4,15 +4,16 @@ from .models import User, BuyerProfile, SellerProfile, ListingImage, Listing, Sa
 from django.db import transaction
 
 
+# =========================
+# Buyer Registration
+# =========================
 class BuyerRegisterSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     email = serializers.EmailField()
     phone = serializers.CharField(max_length=20)
-
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
-
     location = serializers.CharField(max_length=100)
 
     def validate_email(self, email):
@@ -22,16 +23,12 @@ class BuyerRegisterSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
-            raise serializers.ValidationError(
-                {"confirm_password": "Passwords do not match."}
-            )
-
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
         validate_password(data["password"])
         return data
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
-
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
@@ -40,47 +37,29 @@ class BuyerRegisterSerializer(serializers.Serializer):
             phone=validated_data["phone"],
             role="buyer",
         )
-
-        BuyerProfile.objects.create(
-            user=user,
-            location=validated_data["location"],
-        )
-
+        BuyerProfile.objects.create(user=user, location=validated_data["location"])
         return user
 
 
+# =========================
+# Seller Registration
+# =========================
 class SellerRegisterSerializer(serializers.Serializer):
-    # Personal info
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     email = serializers.EmailField()
     phone = serializers.CharField(max_length=20)
-
-    # Passwords
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
 
-    # Business info
     business_name = serializers.CharField(max_length=255)
-    business_type = serializers.ChoiceField(
-        choices=SellerProfile.BUSINESS_TYPE_CHOICES
-    )
-    business_category = serializers.ChoiceField(
-        choices=SellerProfile.CATEGORY_CHOICES
-    )
+    business_type = serializers.ChoiceField(choices=SellerProfile.BUSINESS_TYPE_CHOICES)
+    business_category = serializers.ChoiceField(choices=SellerProfile.CATEGORY_CHOICES)
     business_location = serializers.CharField(max_length=100)
+    bio = serializers.CharField(required=False, allow_blank=True)
 
-    bio = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
-
-    profile_image = serializers.ImageField(
-        required=False,
-        allow_null=True
-    )
-
-    # ---------------- VALIDATION ---------------- #
+    # Cloudinary URL instead of ImageField
+    profile_image = serializers.URLField(required=False, allow_null=True)
 
     def validate_email(self, email):
         if User.objects.filter(email=email).exists():
@@ -89,14 +68,9 @@ class SellerRegisterSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
-            raise serializers.ValidationError(
-                {"confirm_password": "Passwords do not match."}
-            )
-
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
         validate_password(data["password"])
         return data
-
-    # ---------------- CREATE ---------------- #
 
     @transaction.atomic
     def create(self, validated_data):
@@ -126,25 +100,27 @@ class SellerRegisterSerializer(serializers.Serializer):
         return user
 
 
+# =========================
+# Listing Image Serializer
+# =========================
 class ListingImageSerializer(serializers.ModelSerializer):
+    # Use URLField for Cloudinary URL
+    image = serializers.URLField(required=False, allow_null=True)
+
     class Meta:
         model = ListingImage
         fields = ('id', 'image', 'is_primary')
 
 
+# =========================
+# Listing Serializer
+# =========================
 class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, required=False, read_only=True)
 
-    # Add this to include seller's full name
     seller_name = serializers.SerializerMethodField()
-    seller_verified = serializers.BooleanField(
-        source="seller.is_verified",
-        read_only=True
-    )
-    seller_image = serializers.ImageField(
-        source="seller.profile_image",
-        read_only=True
-    )
+    seller_verified = serializers.BooleanField(source="seller.is_verified", read_only=True)
+    seller_image = serializers.URLField(source="seller.profile_image", read_only=True)
 
     class Meta:
         model = Listing
@@ -156,12 +132,14 @@ class ListingSerializer(serializers.ModelSerializer):
         read_only_fields = ('seller', 'status', 'created_at', 'updated_at')
 
     def get_seller_name(self, obj):
-        """Return seller's first and last name from the related User."""
         if obj.seller and obj.seller.user:
             return f"{obj.seller.user.first_name} {obj.seller.user.last_name}"
         return "Seller"
 
 
+# =========================
+# Saved Listing Serializer
+# =========================
 class SavedListingSerializer(serializers.ModelSerializer):
     listing = ListingSerializer(read_only=True)
 
@@ -171,12 +149,13 @@ class SavedListingSerializer(serializers.ModelSerializer):
         read_only_fields = ('buyer', 'saved_at')
 
 
+# =========================
+# Listing Create Serializer
+# =========================
 class ListingCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for creating a listing with multiple images.
-    """
+    # Accept multiple Cloudinary URLs instead of files
     images = serializers.ListField(
-        child=serializers.ImageField(),
+        child=serializers.URLField(),
         write_only=True,
         required=False
     )
@@ -189,15 +168,12 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        # Pop images from the payload
         images_data = validated_data.pop('images', [])
         seller = self.context['request'].user.seller_profile
 
-        # Create the listing
         listing = Listing.objects.create(seller=seller, **validated_data)
 
-        # Add images
-        for image in images_data:
-            ListingImage.objects.create(listing=listing, image=image)
+        for image_url in images_data:
+            ListingImage.objects.create(listing=listing, image=image_url)
 
         return listing
