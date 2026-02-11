@@ -149,7 +149,7 @@ class SavedListingSerializer(serializers.ModelSerializer):
 # =========================
 class ListingCreateSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
-        child=serializers.URLField(),
+        child=serializers.ImageField(),
         write_only=True,
         required=False
     )
@@ -157,17 +157,47 @@ class ListingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = (
-            "title", "description", "price", "category", "condition",
-            "location", "area", "images"
+            "id",
+            "title",
+            "description",
+            "price",
+            "category",
+            "condition",
+            "location",
+            "area",
+            "images",
         )
 
     def create(self, validated_data):
+        request = self.context.get("request")
         images_data = validated_data.pop("images", [])
-        seller = self.context["request"].user.seller_profile
 
-        listing = Listing.objects.create(seller=seller, **validated_data)
+        # Get seller safely
+        if not hasattr(request.user, "seller_profile"):
+            raise serializers.ValidationError("User does not have a seller profile.")
 
-        for image_url in images_data:
-            ListingImage.objects.create(listing=listing, image=image_url)
+        seller = request.user.seller_profile
+
+        # Create listing
+        listing = Listing.objects.create(
+            seller=seller,
+            **validated_data
+        )
+
+        # Create images
+        for index, image in enumerate(images_data):
+            ListingImage.objects.create(
+                listing=listing,
+                image=image,
+                is_primary=(index == 0)  # first image = primary
+            )
 
         return listing
+
+    def to_representation(self, instance):
+        """Return images in response"""
+        representation = super().to_representation(instance)
+        representation["images"] = ListingImageSerializer(
+            instance.images.all(), many=True
+        ).data
+        return representation
