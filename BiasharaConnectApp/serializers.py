@@ -135,14 +135,31 @@ class ListingImageSerializer(serializers.ModelSerializer):
 class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, required=False, read_only=True)
 
+    # Add this to include seller's full name
+    seller_name = serializers.SerializerMethodField()
+    seller_verified = serializers.BooleanField(
+        source="seller.is_verified",
+        read_only=True
+    )
+    seller_image = serializers.ImageField(
+        source="seller.profile_image",
+        read_only=True
+    )
+
     class Meta:
         model = Listing
         fields = (
-            'id', 'seller', 'title', 'description', 'price',
-            'category', 'condition', 'location', 'area', 'status',
-            'created_at', 'updated_at', 'images'
+            'id', 'seller', 'seller_name', 'seller_verified', 'seller_image',
+            'title', 'description', 'price', 'category', 'condition', 'location',
+            'area', 'status', 'created_at', 'updated_at', 'images'
         )
         read_only_fields = ('seller', 'status', 'created_at', 'updated_at')
+
+    def get_seller_name(self, obj):
+        """Return seller's first and last name from the related User."""
+        if obj.seller and obj.seller.user:
+            return f"{obj.seller.user.first_name} {obj.seller.user.last_name}"
+        return "Seller"
 
 
 class SavedListingSerializer(serializers.ModelSerializer):
