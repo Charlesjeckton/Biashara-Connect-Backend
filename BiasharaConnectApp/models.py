@@ -92,7 +92,7 @@ class SellerProfile(models.Model):
         help_text="Short description about the seller or business"
     )
 
-    profile_image = CloudinaryField('image', blank=True, null=True)
+    profile_image = CloudinaryField('image', folder='BiasharaConnect/profile_image', null=True, blank=True)
 
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -191,7 +191,7 @@ class ListingImage(models.Model):
         on_delete=models.CASCADE,
         related_name='images'
     )
-    image = CloudinaryField('image')
+    image = CloudinaryField('image', folder='BiasharaConnect/listing', null=True, blank=True)
     is_primary = models.BooleanField(default=False)
 
     def __str__(self):
