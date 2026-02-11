@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
 from .models import User, BuyerProfile, SellerProfile, Listing, ListingImage, SavedListing
 
 
@@ -9,7 +10,6 @@ from .models import User, BuyerProfile, SellerProfile, Listing, ListingImage, Sa
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     model = User
-
     ordering = ("email",)
     list_display = ("email", "role", "is_staff", "is_verified", "is_active")
     list_filter = ("role", "is_staff", "is_verified", "is_active")
@@ -53,8 +53,6 @@ class UserAdmin(BaseUserAdmin):
         ),
     )
 
-    filter_horizontal = ()
-
 
 # =========================
 # Buyer Profile Admin
@@ -84,9 +82,11 @@ class SellerProfileAdmin(admin.ModelAdmin):
 
     def profile_image_preview(self, obj):
         if obj.profile_image:
-            return f'<img src="{obj.profile_image.url}" style="height:50px;width:50px;border-radius:50%;">'
+            return format_html(
+                '<img src="{}" style="height:50px;width:50px;border-radius:50%;">',
+                obj.profile_image.url,
+            )
         return "-"
-    profile_image_preview.allow_tags = True
     profile_image_preview.short_description = "Profile Image"
 
 
@@ -101,9 +101,11 @@ class ListingImageInline(admin.TabularInline):
 
     def image_preview(self, obj):
         if obj.image:
-            return f'<img src="{obj.image.url}" style="height:50px;width:50px;">'
+            return format_html(
+                '<img src="{}" style="height:50px;width:50px;">',
+                obj.image.url,
+            )
         return "-"
-    image_preview.allow_tags = True
     image_preview.short_description = "Preview"
 
 

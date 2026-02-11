@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from .managers import UserManager
+from cloudinary.models import CloudinaryField
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -65,7 +66,7 @@ class SellerProfile(models.Model):
     bio = models.TextField(blank=True, null=True, help_text="Short description about the seller or business")
 
     # Store Cloudinary URL for profile image
-    profile_image = models.URLField(blank=True, null=True, help_text="Cloudinary URL stored in BiasharaConnect/profile_image folder")
+    profile_image = CloudinaryField('image', folder='BiasharaConnect/profile_image', blank=True, null=True)
 
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,7 +135,7 @@ class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='images')
 
     # Store Cloudinary URL instead of CloudinaryField
-    image = models.URLField(blank=True, null=True, help_text="Cloudinary URL stored in BiasharaConnect/listing folder")
+    image = CloudinaryField('image', folder='BiasharaConnect/listing')
     is_primary = models.BooleanField(default=False)
 
     def __str__(self):

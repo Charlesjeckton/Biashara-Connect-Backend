@@ -88,27 +88,27 @@ def login_user(request):
 
 
 # =========================
-# Listings
+# List Active Listings
 # =========================
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def list_active_listings(request):
-    """
-    Get all active listings (buyers can view).
-    """
     listings = Listing.objects.filter(status="active")
     serializer = ListingSerializer(listings, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# =========================
+# Create Listing (Seller or Admin)
+# =========================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_listing(request):
     """
-    Sellers can create a listing with multiple Cloudinary image URLs.
+    Allow sellers or admin users to create listings with multiple Cloudinary image URLs.
     """
-    if request.user.role != "seller":
-        return Response({"error": "Only sellers can create listings"}, status=status.HTTP_403_FORBIDDEN)
+    if request.user.role not in ["seller", "admin"]:
+        return Response({"error": "Only sellers or admin users can create listings"}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = ListingCreateSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
@@ -123,9 +123,6 @@ def create_listing(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def toggle_save_listing(request, listing_id):
-    """
-    Buyers can save or unsave a listing.
-    """
     if request.user.role != "buyer":
         return Response({"error": "Only buyers can save listings"}, status=status.HTTP_403_FORBIDDEN)
 
