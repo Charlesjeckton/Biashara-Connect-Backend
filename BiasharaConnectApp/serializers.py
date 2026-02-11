@@ -58,7 +58,7 @@ class SellerRegisterSerializer(serializers.Serializer):
     business_category = serializers.ChoiceField(choices=SellerProfile.CATEGORY_CHOICES)
     business_location = serializers.CharField(max_length=100)
     bio = serializers.CharField(required=False, allow_blank=True)
-    profile_image = serializers.ImageField(required=False, allow_null=True)
+    profile_image_url = serializers.URLField(required=False, allow_null=True)
 
     def validate_email(self, email):
         if User.objects.filter(email=email).exists():
@@ -75,7 +75,7 @@ class SellerRegisterSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        profile_image = validated_data.pop("profile_image", None)
+        profile_image_url = validated_data.pop("profile_image_url", None)
         bio = validated_data.pop("bio", "")
         validated_data.pop("confirm_password")
 
@@ -95,48 +95,46 @@ class SellerRegisterSerializer(serializers.Serializer):
             business_category=validated_data["business_category"],
             business_location=validated_data["business_location"],
             bio=bio,
-            profile_image=profile_image,
+            profile_image_url=profile_image_url,
         )
         return user
 
 
 # -------------------- LISTING IMAGE -------------------- #
 class ListingImageSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField()  # Cloudinary URL returned automatically
+    image_url = serializers.URLField()
 
     class Meta:
         model = ListingImage
-        fields = ('id', 'image', 'is_primary')
+        fields = ('id', 'image_url', 'is_primary')
 
 
 # -------------------- LISTING -------------------- #
 class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, read_only=True)
     seller_name = serializers.SerializerMethodField()
-    seller_image = serializers.SerializerMethodField()
+    seller_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Listing
         fields = (
             'id', 'seller', 'title', 'description', 'price',
             'category', 'condition', 'location', 'area', 'status',
-            'created_at', 'updated_at', 'images', 'seller_name', 'seller_image'
+            'created_at', 'updated_at', 'images', 'seller_name', 'seller_image_url'
         )
         read_only_fields = ('seller', 'status', 'created_at', 'updated_at')
 
     def get_seller_name(self, obj):
         return f"{obj.seller.user.first_name} {obj.seller.user.last_name}"
 
-    def get_seller_image(self, obj):
-        if obj.seller.profile_image:
-            return obj.seller.profile_image.url
-        return None
+    def get_seller_image_url(self, obj):
+        return obj.seller.profile_image_url or "/assets/img/no-image.png"
 
 
 # -------------------- CREATE LISTING -------------------- #
 class ListingCreateSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
-        child=serializers.ImageField(),
+        child=serializers.URLField(),
         write_only=True,
         required=False
     )
@@ -153,8 +151,8 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         seller = self.context['request'].user.seller_profile
         listing = Listing.objects.create(seller=seller, **validated_data)
 
-        for image in images_data:
-            ListingImage.objects.create(listing=listing, image=image)
+        for image_url in images_data:
+            ListingImage.objects.create(listing=listing, image_url=image_url)
 
         return listing
 

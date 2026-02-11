@@ -62,7 +62,7 @@ class BuyerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(SellerProfile)
 class SellerProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "profile_image", "business_name", "business_type", "business_category",
+    list_display = ("user", "profile_image_url", "business_name", "business_type", "business_category",
                     "business_location", "is_verified")
     list_filter = ("business_type", "is_verified")
     search_fields = ("user__email", "business_name")
